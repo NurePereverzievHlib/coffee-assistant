@@ -1,10 +1,13 @@
 from fastapi import FastAPI
-from app.routes import router
+from app.database import engine, Base
 
-app = FastAPI(title="Coffee Brewing Assistant API")
+# імпорт моделей, щоб SQLAlchemy створив таблиці
+from app.models import coffee_bean, recipe, step, user, brewing_session, sensor_data
 
-app.include_router(router)
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Coffee Brew Assistant API")
 
 @app.get("/")
 def root():
-    return {"message": "Coffee API is running"}
+    return {"message": "Coffee Brew Assistant API is running"}
