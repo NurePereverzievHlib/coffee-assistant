@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
 from fastapi import FastAPI
-from app.routers import coffee_beans, recipes
+from app.routers import coffee_beans, recipes, steps
 
 from app.models import coffee_bean, recipe, step, user, brewing_session, sensor_data
 
@@ -15,3 +15,4 @@ def root():
 
 app.include_router(coffee_beans.router)
 app.include_router(recipes.router)
+app.include_router(steps.router)
