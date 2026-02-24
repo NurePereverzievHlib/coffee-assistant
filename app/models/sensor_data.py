@@ -1,16 +1,14 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, ForeignKey
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.db.database import Base
 
-class BrewingSession(Base):
-    __tablename__ = "brewing_sessions"
+class SensorData(Base):
+    __tablename__ = "sensor_data"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    recipe_id = Column(Integer, ForeignKey("recipes.id"))
-    start_time = Column(String)
-    end_time = Column(String)
-    current_step = Column(Integer, default=0)
-    status = Column(String, default="in_progress")  # in_progress, completed
+    session_id = Column(Integer, ForeignKey("brewing_sessions.id"))
+    timestamp = Column(String)  # ISO timestamp
+    weight = Column(Float, nullable=False)
+    pour_rate = Column(Float)  # мл/с
 
-    sensor_logs = relationship("SensorData", back_populates="session", cascade="all, delete-orphan")
+    session = relationship("BrewingSession", back_populates="sensor_logs")

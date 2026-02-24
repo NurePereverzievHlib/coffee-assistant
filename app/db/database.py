@@ -14,15 +14,12 @@ def get_engine():
         raise ValueError("DATABASE_URL не знайдено в .env файлі")
 
     try:
-        # Створюємо об'єкт URL. Якщо в паролі є спецсимволи, 
-        # SQLAlchemy автоматично спробує їх обробити.
         url_obj = make_url(raw_url)
         
-        # Створюємо engine з явним зазначенням кодування клієнта
         engine = create_engine(
             url_obj,
             client_encoding='utf8',
-            echo=False # Поставте True, якщо хочете бачити SQL-запити в консолі
+            echo=False
         )
         return engine
     except Exception as e:
