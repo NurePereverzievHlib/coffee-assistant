@@ -6,6 +6,7 @@ from datetime import datetime
 from app.db.database import SessionLocal
 from app.models.brewing_session import BrewingSession
 from app.schemas.brewing_session import BrewingSessionCreate, BrewingSessionUpdate, BrewingSessionResponse
+from app.models.step import Step
 
 router = APIRouter(
     prefix="/sessions",
@@ -75,3 +76,40 @@ def delete_session(session_id: int):
     db.commit()
     return {"detail": "Brewing session deleted"}
 
+@router.post("/{session_id}/next-step", response_model=BrewingSessionResponse)
+def next_step(session_id: int):
+    db: Session = SessionLocal()
+
+    db_session = db.query(BrewingSession).filter(
+        BrewingSession.id == session_id
+    ).first()
+
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Brewing session not found")
+
+    if db_session.status != "in_progress":
+        raise HTTPException(
+            status_code=400,
+            detail="Session is not active"
+        )
+
+    steps_count = db.query(Step).filter(
+        Step.recipe_id == db_session.recipe_id
+    ).count()
+
+    if steps_count == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Recipe has no steps"
+        )
+
+    db_session.current_step += 1
+
+    if db_session.current_step >= steps_count:
+        db_session.status = "completed"
+        db_session.end_time = datetime.utcnow()
+
+    db.commit()
+    db.refresh(db_session)
+
+    return db_session
