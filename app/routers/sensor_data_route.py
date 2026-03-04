@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict
 from datetime import datetime
+import asyncio
 
 from app.db.database import SessionLocal
 from app.models.sensor_data import SensorData
@@ -12,14 +13,8 @@ router = APIRouter(
     tags=["SensorData"]
 )
 
-# GET /sensor-data/session/{session_id}
-@router.get("/session/{session_id}", response_model=List[SensorDataResponse])
-def get_sensor_logs(session_id: int):
-    db: Session = SessionLocal()
-    logs = db.query(SensorData).filter(SensorData.session_id == session_id).all()
-    return logs
+active_connections: Dict[int, List[WebSocket]] = {}
 
-# POST /sensor-data/ - додати новий лог
 @router.post("/", response_model=SensorDataResponse)
 def create_sensor_log(data: SensorDataCreate):
     db: Session = SessionLocal()
@@ -33,15 +28,28 @@ def create_sensor_log(data: SensorDataCreate):
     db.add(log)
     db.commit()
     db.refresh(log)
+
+    if data.session_id in active_connections:
+        for ws in active_connections[data.session_id]:
+            asyncio.create_task(ws.send_json({
+                "weight": log.weight,
+                "pour_rate": log.pour_rate,
+                "timestamp": log.timestamp
+            }))
+
     return log
 
-# DELETE /sensor-data/{id}
-@router.delete("/{log_id}")
-def delete_sensor_log(log_id: int):
-    db: Session = SessionLocal()
-    log = db.query(SensorData).filter(SensorData.id == log_id).first()
-    if not log:
-        raise HTTPException(status_code=404, detail="Sensor log not found")
-    db.delete(log)
-    db.commit()
-    return {"detail": "Sensor log deleted"}
+@router.websocket("/ws/{session_id}")
+async def sensor_ws(websocket: WebSocket, session_id: int):
+    await websocket.accept()
+    session_id = int(session_id)
+
+    if session_id not in active_connections:
+        active_connections[session_id] = []
+    active_connections[session_id].append(websocket)
+
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        active_connections[session_id].remove(websocket)
