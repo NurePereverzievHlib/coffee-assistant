@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
-from fastapi import FastAPI
+
 from app.routers import coffee_beans, recipes, steps, brewing_sessions, sensor_data_route
+from app.auth.auth import router as auth_router  
 
 from app.models import coffee_bean, recipe, step, user, brewing_session, sensor_data
 
@@ -13,6 +14,7 @@ app = FastAPI(title="Coffee Brew Assistant API")
 def root():
     return {"message": "Coffee Brew Assistant API is running"}
 
+app.include_router(auth_router)            
 app.include_router(coffee_beans.router)
 app.include_router(recipes.router)
 app.include_router(steps.router)

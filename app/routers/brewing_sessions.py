@@ -74,3 +74,4 @@ def delete_session(session_id: int):
     db.delete(db_session)
     db.commit()
     return {"detail": "Brewing session deleted"}
+
