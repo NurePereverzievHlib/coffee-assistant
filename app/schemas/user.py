@@ -10,6 +10,9 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLogin(BaseModel):
+    id_token: str = Field(..., min_length=20)
+
 class UserResponse(BaseModel):
     id: int
     username: str

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Bloom",
+    "slug": "coffee-assistant-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bloom",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.hlibp.bloom",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.hlibp.bloom",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3e948f08-815b-4033-832a-076857b4b18e"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "coffee-assistant-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start --offline --max-workers 1",
+    "start:fresh": "expo start --offline --max-workers 1 --port 8082 --clear",
+    "start:phone": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& set REACT_NATIVE_PACKAGER_HOSTNAME=192.168.0.191&& set EXPO_PUBLIC_API_URL=http://192.168.0.191:8000&& expo start --lan --max-workers 1 --port 8082 --clear",
+    "start:emulator": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& set EXPO_PUBLIC_API_URL=http://10.0.2.2:8000&& expo start --localhost --max-workers 1 --port 8082 --clear",
+    "start:online": "expo start --max-workers 1",
+    "android": "expo start --offline --max-workers 1 --android",
+    "ios": "expo start --offline --max-workers 1 --ios",
+    "web": "expo start --offline --max-workers 1 --web",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo-google-fonts/manrope": "^0.4.0",
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-google-signin/google-signin": "^16.1.2",
+    "expo": "~54.0.0",
+    "expo-auth-session": "~7.0.10",
+    "expo-dev-client": "~6.0.20",
+    "expo-font": "~14.0.11",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-secure-store": "~15.0.8",
+    "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.10",
+    "react": "^19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "babel-preset-expo": "~54.0.10",
+    "typescript": "~5.9.2"
+  }
+}
