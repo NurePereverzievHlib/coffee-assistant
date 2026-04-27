@@ -1,5 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from app.auth.utils import decode_access_token
 from app.db.database import SessionLocal
 from app.models.recipe import Recipe
 from app.models.step import Step
@@ -12,12 +16,41 @@ router = APIRouter(
     tags=["Recipes"]
 )
 
+security = HTTPBearer()
+
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return int(user_id)
+    except (JWTError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # GET /recipes
 @router.get("/", response_model=list[RecipeResponse])
-def get_recipes():
+def get_recipes(user_id: int = Depends(get_current_user_id)):
     db: Session = SessionLocal()
-    recipes = db.query(Recipe).all()
-    return recipes
+    try:
+        recipes = db.execute(
+            text(
+                """
+                SELECT
+                    r.*,
+                    cb.image
+                FROM recipes r
+                JOIN coffee_beans cb
+                    ON r.coffee_bean_id = cb.id
+                WHERE r.user_id = :user_id
+                """
+            ),
+            {"user_id": user_id}
+        ).mappings().all()
+
+        return [dict(recipe) for recipe in recipes]
+    finally:
+        db.close()
 
 # GET /recipes/{id}
 @router.get("/{recipe_id}", response_model=RecipeResponse)
@@ -30,7 +63,7 @@ def get_recipe(recipe_id: int):
 
 # POST /recipes
 @router.post("/", response_model=RecipeResponse)
-def create_recipe(recipe: RecipeCreate):
+def create_recipe(recipe: RecipeCreate, user_id: int = Depends(get_current_user_id)):
     db: Session = SessionLocal()
 
     # Перевірка, чи існує CoffeeBean
@@ -41,6 +74,7 @@ def create_recipe(recipe: RecipeCreate):
     # Створюємо Recipe
     db_recipe = Recipe(
         name=recipe.name,
+        user_id=user_id,
         coffee_bean_id=recipe.coffee_bean_id,
         coffee_grams=recipe.coffee_grams,
         water_temp=recipe.water_temp,

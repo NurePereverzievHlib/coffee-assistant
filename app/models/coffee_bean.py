@@ -9,5 +9,6 @@ class CoffeeBean(Base):
     processing_type = Column(String, nullable=False)  # "washed", "natural", "anaerobic", "infuse", "thermal_shock"
     price = Column(Float, nullable=False)
     descriptors = Column(ARRAY(String)) 
+    image = Column(String, nullable=True)
     weight_in_grams = Column(Integer, nullable=False, default=250)
     stock = Column(Integer, default=0)

@@ -28,6 +28,8 @@ class RecipeUpdate(BaseModel):
 
 class RecipeResponse(RecipeBase):
     id: int
+    user_id: int
+    image: Optional[str] = None
     steps: List[StepResponse] = []
 
     model_config = {"from_attributes": True}

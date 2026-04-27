@@ -8,6 +8,7 @@ class Recipe(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     coffee_bean_id = Column(Integer, ForeignKey("coffee_beans.id"), nullable=False)
     coffee_grams = Column(Float, nullable=False)
     water_temp = Column(Float, nullable=False)

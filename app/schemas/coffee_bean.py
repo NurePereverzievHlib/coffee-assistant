@@ -8,6 +8,7 @@ class CoffeeBeanBase(BaseModel):
     processing_type: str
     price: float = Field(..., gt=0)
     descriptors: Optional[List[str]] = []
+    image: Optional[str] = None
     weight_in_grams: int = Field(..., gt=0, description="Grams per pack")
     stock: Optional[int] = 0
 

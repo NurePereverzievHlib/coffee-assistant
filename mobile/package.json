@@ -6,8 +6,8 @@
   "scripts": {
     "start": "expo start --offline --max-workers 1",
     "start:fresh": "expo start --offline --max-workers 1 --port 8082 --clear",
-    "start:phone": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& set REACT_NATIVE_PACKAGER_HOSTNAME=192.168.0.191&& set EXPO_PUBLIC_API_URL=http://192.168.0.191:8000&& expo start --lan --max-workers 1 --port 8082 --clear",
-    "start:emulator": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& set EXPO_PUBLIC_API_URL=http://10.0.2.2:8000&& expo start --localhost --max-workers 1 --port 8082 --clear",
+    "start:phone": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& expo start --lan --max-workers 1 --port 8082 --clear",
+    "start:emulator": "set EXPO_NO_DEPENDENCY_VALIDATION=1&& expo start --localhost --max-workers 1 --port 8082 --clear",
     "start:online": "expo start --max-workers 1",
     "android": "expo start --offline --max-workers 1 --android",
     "ios": "expo start --offline --max-workers 1 --ios",

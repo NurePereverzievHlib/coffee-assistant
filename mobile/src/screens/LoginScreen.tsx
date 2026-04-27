@@ -20,10 +20,11 @@ import { useGoogleAuth } from "../hooks/useGoogleAuth";
 import { saveAccessToken } from "../storage/authToken";
 
 type LoginScreenProps = {
+  onAuthenticated: () => void;
   onRegisterPress: () => void;
 };
 
-export function LoginScreen({ onRegisterPress }: LoginScreenProps) {
+export function LoginScreen({ onAuthenticated, onRegisterPress }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -46,7 +47,7 @@ export function LoginScreen({ onRegisterPress }: LoginScreenProps) {
       });
 
       await saveAccessToken(result.access_token);
-      Alert.alert("Вхід виконано", "Токен збережено. Далі можна відкривати головний екран.");
+      onAuthenticated();
     } catch (error) {
       Alert.alert("Помилка входу", error instanceof Error ? error.message : "Спробуйте ще раз.");
     } finally {
@@ -58,7 +59,7 @@ export function LoginScreen({ onRegisterPress }: LoginScreenProps) {
     try {
       const signedIn = await signInWithGoogle();
       if (signedIn) {
-        Alert.alert("Вхід виконано", "Google акаунт підключено, токен збережено.");
+        onAuthenticated();
       }
     } catch (error) {
       Alert.alert(
@@ -165,6 +166,7 @@ export function LoginScreen({ onRegisterPress }: LoginScreenProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Увійти через Google"
+            disabled={!isGoogleReady}
             onPress={handleGoogleLogin}
             style={({ pressed }) => [
               styles.googleButton,

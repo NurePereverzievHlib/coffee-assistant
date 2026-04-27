@@ -20,10 +20,11 @@ import { FieldIcon } from "../components/FieldIcon";
 import { useGoogleAuth } from "../hooks/useGoogleAuth";
 
 type RegisterScreenProps = {
+  onAuthenticated: () => void;
   onLoginPress: () => void;
 };
 
-export function RegisterScreen({ onLoginPress }: RegisterScreenProps) {
+export function RegisterScreen({ onAuthenticated, onLoginPress }: RegisterScreenProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +69,7 @@ export function RegisterScreen({ onLoginPress }: RegisterScreenProps) {
     try {
       const signedIn = await signInWithGoogle();
       if (signedIn) {
-        Alert.alert("Реєстрацію завершено", "Google акаунт підключено, токен збережено.");
+        onAuthenticated();
       }
     } catch (error) {
       Alert.alert(
@@ -94,12 +95,14 @@ export function RegisterScreen({ onLoginPress }: RegisterScreenProps) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.logoWrap}>
-            <BloomLogo />
+            <BloomLogo height={112} width={282} />
           </View>
 
           <View style={styles.card}>
             <Text style={styles.title}>Створіть акаунт</Text>
-            <Text style={styles.subtitle}>Зареєструйтесь, щоб зберігати свої кавові рецепти</Text>
+            <Text style={styles.subtitle}>
+              Зареєструйтесь, щоб зберігати свої кавові рецепти
+            </Text>
 
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Ім'я користувача</Text>
@@ -193,6 +196,7 @@ export function RegisterScreen({ onLoginPress }: RegisterScreenProps) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Зареєструватись через Google"
+              disabled={!isGoogleReady}
               onPress={handleGoogleRegister}
               style={({ pressed }) => [
                 styles.googleButton,

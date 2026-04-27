@@ -2,17 +2,27 @@ import { Manrope_500Medium, Manrope_700Bold, useFonts } from "@expo-google-fonts
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { HomeScreen } from "./src/screens/HomeScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
+import { clearAccessToken } from "./src/storage/authToken";
 
 type AuthScreen = "login" | "register";
+type AppScreen = "auth" | "home";
 
 export default function App() {
+  const [appScreen, setAppScreen] = useState<AppScreen>("auth");
   const [authScreen, setAuthScreen] = useState<AuthScreen>("login");
   const [fontsLoaded] = useFonts({
     Manrope_500Medium,
     Manrope_700Bold
   });
+
+  async function handleLogout() {
+    await clearAccessToken();
+    setAppScreen("auth");
+    setAuthScreen("login");
+  }
 
   if (!fontsLoaded) {
     return (
@@ -25,10 +35,18 @@ export default function App() {
   return (
     <>
       <StatusBar style="dark" />
-      {authScreen === "login" ? (
-        <LoginScreen onRegisterPress={() => setAuthScreen("register")} />
+      {appScreen === "home" ? (
+        <HomeScreen onLogout={handleLogout} />
+      ) : authScreen === "login" ? (
+        <LoginScreen
+          onAuthenticated={() => setAppScreen("home")}
+          onRegisterPress={() => setAuthScreen("register")}
+        />
       ) : (
-        <RegisterScreen onLoginPress={() => setAuthScreen("login")} />
+        <RegisterScreen
+          onAuthenticated={() => setAppScreen("home")}
+          onLoginPress={() => setAuthScreen("login")}
+        />
       )}
     </>
   );

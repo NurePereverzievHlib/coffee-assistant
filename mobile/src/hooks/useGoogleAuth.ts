@@ -18,6 +18,7 @@ async function signInWithNativeGoogle() {
 
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    await GoogleSignin.signOut();
     const response = await GoogleSignin.signIn();
 
     if (response.type === "cancelled") {
