@@ -1,10 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
+
 from app.schemas.step import StepCreate, StepResponse
+
 
 class RecipeBase(BaseModel):
     name: str
-    coffee_bean_id: int
+    brew_method: str = Field(..., min_length=1)
+    coffee_bean_id: Optional[int] = None
     coffee_grams: float
     water_temp: float
     grind_level: float
@@ -12,11 +15,14 @@ class RecipeBase(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class RecipeCreate(RecipeBase):
     steps: List[StepCreate] = []
 
+
 class RecipeUpdate(BaseModel):
     name: Optional[str] = None
+    brew_method: Optional[str] = Field(None, min_length=1)
     coffee_bean_id: Optional[int] = None
     coffee_grams: Optional[float] = None
     water_temp: Optional[float] = None
@@ -26,10 +32,11 @@ class RecipeUpdate(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class RecipeResponse(RecipeBase):
     id: int
-    user_id: int
-    image: Optional[str] = None
+    coffee_name: Optional[str] = None
+    coffee_image: Optional[str] = None
     steps: List[StepResponse] = []
 
     model_config = {"from_attributes": True}

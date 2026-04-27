@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, ARRAY
+from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class CoffeeBean(Base):
@@ -12,3 +13,5 @@ class CoffeeBean(Base):
     image = Column(String, nullable=True)
     weight_in_grams = Column(Integer, nullable=False, default=250)
     stock = Column(Integer, default=0)
+
+    recipes = relationship("Recipe", back_populates="coffee_bean")

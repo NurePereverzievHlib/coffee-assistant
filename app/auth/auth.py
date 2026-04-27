@@ -6,19 +6,13 @@ from fastapi import APIRouter, HTTPException, Depends
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from sqlalchemy.orm import Session
-from app.db.database import SessionLocal
+from app.auth.dependencies import get_current_user, get_db
 from app.models.user import User
 from app.schemas.user import GoogleLogin, UserCreate, UserLogin, UserResponse
 from app.auth.utils import hash_password, verify_password, create_access_token
+from app.services.default_recipes import assign_default_recipes
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def create_token_for_user(user: User):
     access_token = create_access_token({"sub": str(user.id)})
@@ -59,6 +53,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    assign_default_recipes(db, db_user.id)
+    db.commit()
     return db_user
 
 @router.post("/login")
@@ -67,6 +63,8 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    assign_default_recipes(db, db_user.id)
+    db.commit()
     return create_token_for_user(db_user)
 
 @router.post("/google")
@@ -88,6 +86,7 @@ def google_login(payload: GoogleLogin, db: Session = Depends(get_db)):
 
     email = idinfo.get("email")
     email_verified = idinfo.get("email_verified")
+    avatar_url = idinfo.get("picture")
     if not email or not email_verified:
         raise HTTPException(status_code=401, detail="Google email is not verified")
 
@@ -96,10 +95,22 @@ def google_login(payload: GoogleLogin, db: Session = Depends(get_db)):
         db_user = User(
             username=unique_username(db, email, idinfo.get("name")),
             email=email,
+            avatar_url=avatar_url,
             hashed_password=hash_password(secrets.token_urlsafe(32))
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+        assign_default_recipes(db, db_user.id)
+        db.commit()
+    else:
+        if avatar_url and db_user.avatar_url != avatar_url:
+            db_user.avatar_url = avatar_url
+        assign_default_recipes(db, db_user.id)
+        db.commit()
 
     return create_token_for_user(db_user)
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user

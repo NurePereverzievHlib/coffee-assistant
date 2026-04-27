@@ -1,3 +1,5 @@
+import { getAccessToken } from "../storage/authToken";
+
 export type LoginPayload = {
   email: string;
   password: string;
@@ -22,8 +24,11 @@ export type RegisterResponse = {
   id: number;
   username: string;
   email: string;
+  avatar_url?: string | null;
   created_at: string;
 };
+
+export type CurrentUser = RegisterResponse;
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
@@ -138,4 +143,30 @@ export async function loginWithGoogle(payload: GoogleLoginPayload): Promise<Logi
   }
 
   return response.json() as Promise<LoginResponse>;
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const token = await getAccessToken();
+
+  if (!token) {
+    throw new Error("No access token");
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  } catch {
+    throw new Error(connectionError);
+  }
+
+  if (!response.ok) {
+    throw new Error("Не вдалося завантажити профіль.");
+  }
+
+  return response.json() as Promise<CurrentUser>;
 }

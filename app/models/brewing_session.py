@@ -4,7 +4,7 @@ from app.db.database import Base
 from datetime import datetime
 
 class BrewingSession(Base):
-    __tablename__ = "brewing_sessions"
+    __tablename__ = "brewing_session"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -14,6 +14,8 @@ class BrewingSession(Base):
     current_step = Column(Integer, default=0)
     status = Column(String, default="in_progress")  # in_progress, completed
 
+    user = relationship("User", back_populates="brewing_sessions")
+    recipe = relationship("Recipe", back_populates="brewing_sessions")
     sensor_logs = relationship(
         "SensorData",
         back_populates="session",

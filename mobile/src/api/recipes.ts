@@ -4,20 +4,24 @@ import { getAccessToken } from "../storage/authToken";
 export type Recipe = {
   id: number;
   name: string;
-  user_id: number;
-  coffee_bean_id: number;
+  brew_method: string;
+  coffee_bean_id: number | null;
   coffee_grams: number;
   water_temp: number;
   grind_level: number;
   total_time: string;
-  image?: string | null;
+  coffee_name?: string | null;
+  coffee_image?: string | null;
+  steps: Array<{
+    id: number;
+    step_number: number;
+    start_time: number;
+    water_volume: number;
+  }>;
 };
 
 function isDirectImageUrl(image: string) {
-  return (
-    image.startsWith("data:image/") ||
-    /\.(avif|gif|jpe?g|png|webp)(\?.*)?$/i.test(image)
-  );
+  return image.startsWith("data:image/") || /\.(avif|gif|jpe?g|png|webp)(\?.*)?$/i.test(image);
 }
 
 function normalizeImageUrl(image?: string | null) {
@@ -38,11 +42,7 @@ function normalizeImageUrl(image?: string | null) {
     }
   }
 
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://") ||
-    image.startsWith("data:image/")
-  ) {
+  if (image.startsWith("http://") || image.startsWith("https://") || image.startsWith("data:image/")) {
     return isDirectImageUrl(image) ? image : null;
   }
 
@@ -73,6 +73,6 @@ export async function getRecipes(): Promise<Recipe[]> {
 
   return recipes.map((recipe) => ({
     ...recipe,
-    image: normalizeImageUrl(recipe.image)
+    coffee_image: normalizeImageUrl(recipe.coffee_image)
   }));
 }
