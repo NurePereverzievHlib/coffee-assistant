@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
-from app.db.schema_updates import ensure_user_avatar_column
+from app.db.schema_updates import ensure_recipe_details_columns, ensure_user_avatar_column
 
 from app.routers import coffee_beans, recipes, steps, brewing_sessions, sensor_data_route
 from app.auth.auth import router as auth_router  
@@ -10,6 +10,7 @@ from app.models import coffee_bean, recipe, step, user, user_recipe, brewing_ses
 
 Base.metadata.create_all(bind=engine)
 ensure_user_avatar_column(engine)
+ensure_recipe_details_columns(engine)
 
 app = FastAPI(title="Coffee Brew Assistant API")
 

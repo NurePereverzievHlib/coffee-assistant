@@ -55,6 +55,7 @@ def serialize_recipe_rows(db: Session, recipe_rows: list[dict]) -> list[dict]:
             {
                 "id": step.id,
                 "step_number": step.step_number,
+                "step_type": step.step_type,
                 "start_time": step.start_time,
                 "water_volume": step.water_volume,
             }
@@ -83,7 +84,9 @@ def get_recipes(
             SELECT DISTINCT
                 r.id,
                 r.name,
+                r.description,
                 COALESCE(r.brew_method, 'Hario V-60') AS brew_method,
+                r.created_by,
                 r.coffee_bean_id,
                 r.coffee_grams,
                 r.water_temp,
@@ -120,7 +123,9 @@ def get_recipe(
             SELECT
                 r.id,
                 r.name,
+                r.description,
                 COALESCE(r.brew_method, 'Hario V-60') AS brew_method,
+                r.created_by,
                 r.coffee_bean_id,
                 r.coffee_grams,
                 r.water_temp,
@@ -165,6 +170,7 @@ def create_recipe(
 
     db_recipe = Recipe(
         name=recipe.name,
+        description=recipe.description,
         brew_method=recipe.brew_method,
         coffee_bean_id=recipe.coffee_bean_id,
         coffee_grams=recipe.coffee_grams,
@@ -180,6 +186,7 @@ def create_recipe(
         db.add(
             Step(
                 step_number=step.step_number,
+                step_type=step.step_type,
                 start_time=step.start_time,
                 water_volume=step.water_volume,
                 recipe_id=db_recipe.id,
@@ -224,17 +231,21 @@ def update_recipe(
             raise HTTPException(status_code=400, detail="CoffeeBean not found")
 
     for key, value in data.items():
-        if key != "steps":
+        if key not in {"steps", "description"}:
             setattr(db_recipe, key, value)
+
+    if "description" in data:
+        db_recipe.description = data["description"]
 
     if "steps" in data and data["steps"] is not None:
         db.query(Step).filter(Step.recipe_id == recipe_id).delete()
         for step in data["steps"]:
             db.add(
                 Step(
-                    step_number=step.step_number,
-                    start_time=step.start_time,
-                    water_volume=step.water_volume,
+                    step_number=step["step_number"],
+                    step_type=step.get("step_type") or "Лити",
+                    start_time=step["start_time"],
+                    water_volume=step["water_volume"],
                     recipe_id=recipe_id,
                 )
             )

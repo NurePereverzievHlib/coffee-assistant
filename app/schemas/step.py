@@ -4,6 +4,7 @@ from typing import Optional
 
 class StepBase(BaseModel):
     step_number: int = Field(..., gt=0)
+    step_type: str = Field("Лити", min_length=1)
     start_time: int = Field(..., ge=0)
     water_volume: float = Field(..., ge=0)
 
@@ -16,6 +17,7 @@ class StepCreate(StepBase):
 
 class StepUpdate(BaseModel):
     step_number: Optional[int] = Field(None, gt=0)
+    step_type: Optional[str] = Field(None, min_length=1)
     start_time: Optional[int] = Field(None, ge=0)
     water_volume: Optional[float] = Field(None, ge=0)
 

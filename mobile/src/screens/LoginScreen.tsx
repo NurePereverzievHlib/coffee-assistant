@@ -34,9 +34,7 @@ export function LoginScreen({ onAuthenticated, onRegisterPress }: LoginScreenPro
   const canSubmit = email.trim().length > 0 && password.length >= 6 && !isSubmitting;
 
   async function handleLogin() {
-    if (!canSubmit) {
-      return;
-    }
+    if (!canSubmit) return;
 
     setIsSubmitting(true);
 
@@ -79,9 +77,23 @@ export function LoginScreen({ onAuthenticated, onRegisterPress }: LoginScreenPro
           <BloomLogo />
         </View>
 
-        <View pointerEvents="none" style={styles.blueBlob} />
-        <View pointerEvents="none" style={styles.coralBlob} />
-        <View pointerEvents="none" style={styles.oliveBlob} />
+        <View pointerEvents="none" style={styles.blobsWrap}>
+  <LinearGradient
+    colors={["#A1AFFF", "#C4BEBE", "#F57559"]}
+    locations={[0, 0.52, 1]}
+    start={{ x: 0.2, y: 0 }}
+    end={{ x: 0.85, y: 1 }}
+    style={styles.gradientCircle}
+  />
+
+  <LinearGradient
+    colors={["#E5CF82", "#8C8C8C", "#FF813D"]}
+    locations={[0, 0.5, 1]}
+    start={{ x: 0.3, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={styles.gradientCircleBottom}
+  />
+</View>
 
         <View style={styles.card}>
           <Text style={styles.title}>Вітаємо знову!</Text>
@@ -119,6 +131,7 @@ export function LoginScreen({ onAuthenticated, onRegisterPress }: LoginScreenPro
                 textContentType="password"
                 value={password}
               />
+
               <Pressable
                 accessibilityLabel={passwordVisible ? "Сховати пароль" : "Показати пароль"}
                 hitSlop={12}
@@ -196,64 +209,56 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     flex: 1
   },
+
   screen: {
     alignItems: "center",
     flex: 1,
     overflow: "hidden",
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
+    paddingBottom: 48
   },
+
   logoWrap: {
     alignItems: "center",
-    height: 175,
-    justifyContent: "flex-end",
+    height: 210,
+    justifyContent: "center",
     width: "100%",
-    zIndex: 2
+    zIndex: 3
   },
-  blueBlob: {
-    backgroundColor: "#818bd3",
-    borderRadius: 292,
-    height: 585,
-    left: -246,
-    opacity: 0.72,
-    position: "absolute",
-    top: 205,
-    transform: [{ rotate: "75deg" }],
-    width: 585
-  },
-  coralBlob: {
-    backgroundColor: "#f4775a",
-    borderRadius: 226,
-    bottom: -32,
-    height: 453,
-    left: -168,
-    opacity: 0.73,
-    position: "absolute",
-    transform: [{ rotate: "-7deg" }],
-    width: 453
-  },
-  oliveBlob: {
-    backgroundColor: "#949063",
-    borderRadius: 240,
-    bottom: -120,
-    height: 480,
-    opacity: 0.72,
-    position: "absolute",
-    right: -244,
-    transform: [{ rotate: "-22deg" }],
-    width: 480
-  },
+
+  blobsWrap: {
+  bottom: 0,
+  height: 760,
+  left: 0,
+  position: "absolute",
+  right: 0,
+  top: 220,
+  zIndex: 1
+},
+
+  gradientCircle: {
+  borderRadius: 260,
+  height: 520,
+  width: 520,
+  position: "absolute",
+  top: -50,
+  left: -140,
+  transform: [{ rotate: "-10deg" }],
+  zIndex: 2
+},
+
   card: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.18)",
     borderColor: "rgba(255,255,255,0.72)",
     borderRadius: 10,
     borderWidth: 1,
-    marginTop: 80,
     minHeight: 578,
     paddingHorizontal: 25,
     paddingTop: 21,
     width: 337,
     zIndex: 3
   },
+
   title: {
     color: "#333333",
     fontFamily: "Manrope_500Medium",
@@ -261,6 +266,7 @@ const styles = StyleSheet.create({
     lineHeight: 45,
     textAlign: "center"
   },
+
   subtitle: {
     color: "#646464",
     fontFamily: "Manrope_500Medium",
@@ -269,16 +275,19 @@ const styles = StyleSheet.create({
     marginTop: 9,
     textAlign: "center"
   },
+
   fieldGroup: {
     gap: 9,
     marginTop: 23
   },
+
   label: {
     color: "#2f2f2f",
     fontFamily: "Manrope_500Medium",
     fontSize: 16,
     lineHeight: 22
   },
+
   inputShell: {
     alignItems: "center",
     borderColor: "#2f2f2f",
@@ -289,6 +298,7 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 18
   },
+
   input: {
     color: "#2f2f2f",
     flex: 1,
@@ -297,6 +307,7 @@ const styles = StyleSheet.create({
     height: 46,
     padding: 0
   },
+
   eyeButton: {
     alignItems: "center",
     height: 32,
@@ -304,10 +315,12 @@ const styles = StyleSheet.create({
     marginRight: -4,
     width: 32
   },
+
   forgotButton: {
     alignItems: "flex-end",
     marginTop: 8
   },
+
   forgotText: {
     color: "#ffffff",
     fontFamily: "Manrope_500Medium",
@@ -315,6 +328,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textDecorationLine: "underline"
   },
+
   loginButton: {
     borderRadius: 15,
     height: 55,
@@ -322,20 +336,24 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: "100%"
   },
+
   loginButtonMuted: {
     opacity: 0.75
   },
+
   loginGradient: {
     alignItems: "center",
     flex: 1,
     justifyContent: "center"
   },
+
   loginText: {
     color: "#ffffff",
     fontFamily: "Manrope_700Bold",
     fontSize: 23,
     lineHeight: 31
   },
+
   dividerRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -343,17 +361,30 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginTop: 22
   },
+
   divider: {
     backgroundColor: "#626262",
     flex: 1,
     height: 1
   },
+
   dividerText: {
     color: "#626262",
     fontFamily: "Manrope_500Medium",
     fontSize: 16,
     lineHeight: 22
   },
+
+  gradientCircleBottom: {
+  borderRadius: 280,
+  height: 560,
+  width: 560,
+  position: "absolute",
+  right: -180,
+  bottom: -120,
+  transform: [{ rotate: "18deg" }]
+},
+
   googleButton: {
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.92)",
@@ -370,33 +401,39 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10
   },
+
   googleButtonPressed: {
     opacity: 0.82
   },
+
   googleIcon: {
     alignItems: "center",
     height: 24,
     justifyContent: "center",
     width: 24
   },
+
   googleText: {
     color: "#2f2f2f",
     fontFamily: "Manrope_700Bold",
     fontSize: 16,
     lineHeight: 22
   },
+
   registerRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20
   },
+
   registerText: {
     color: "#000000",
     fontFamily: "Manrope_500Medium",
     fontSize: 14,
     lineHeight: 19
   },
+
   registerLink: {
     color: "#ffffff",
     fontFamily: "Manrope_500Medium",
@@ -404,4 +441,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textDecorationLine: "underline"
   }
+
+  
 });
+

@@ -15,6 +15,8 @@ class Step(Base):
 
     step_number = Column(Integer, nullable=False)
 
+    step_type = Column(String, nullable=False, default="Лити")
+
     start_time = Column(Integer, nullable=False)  # seconds from start
 
     water_volume = Column(Float, nullable=False)

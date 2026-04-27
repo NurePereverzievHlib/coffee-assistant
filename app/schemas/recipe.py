@@ -6,6 +6,7 @@ from app.schemas.step import StepCreate, StepResponse
 
 class RecipeBase(BaseModel):
     name: str
+    description: Optional[str] = None
     brew_method: str = Field(..., min_length=1)
     coffee_bean_id: Optional[int] = None
     coffee_grams: float
@@ -22,6 +23,7 @@ class RecipeCreate(RecipeBase):
 
 class RecipeUpdate(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
     brew_method: Optional[str] = Field(None, min_length=1)
     coffee_bean_id: Optional[int] = None
     coffee_grams: Optional[float] = None
@@ -35,6 +37,7 @@ class RecipeUpdate(BaseModel):
 
 class RecipeResponse(RecipeBase):
     id: int
+    created_by: Optional[int] = None
     coffee_name: Optional[str] = None
     coffee_image: Optional[str] = None
     steps: List[StepResponse] = []

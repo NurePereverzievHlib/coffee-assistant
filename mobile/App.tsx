@@ -2,13 +2,15 @@ import { Manrope_500Medium, Manrope_700Bold, useFonts } from "@expo-google-fonts
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { BrewJournalScreen } from "./src/screens/BrewJournalScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
+import { MyRecipesScreen } from "./src/screens/MyRecipesScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
 import { clearAccessToken } from "./src/storage/authToken";
 
 type AuthScreen = "login" | "register";
-type AppScreen = "auth" | "home";
+type AppScreen = "auth" | "home" | "my-recipes" | "journal";
 
 export default function App() {
   const [appScreen, setAppScreen] = useState<AppScreen>("auth");
@@ -36,7 +38,21 @@ export default function App() {
     <>
       <StatusBar style="dark" />
       {appScreen === "home" ? (
-        <HomeScreen onLogout={handleLogout} />
+        <HomeScreen
+          onLogout={handleLogout}
+          onOpenJournal={() => setAppScreen("journal")}
+          onOpenMyRecipes={() => setAppScreen("my-recipes")}
+        />
+      ) : appScreen === "my-recipes" ? (
+        <MyRecipesScreen
+          onBackHome={() => setAppScreen("home")}
+          onOpenJournal={() => setAppScreen("journal")}
+        />
+      ) : appScreen === "journal" ? (
+        <BrewJournalScreen
+          onBackHome={() => setAppScreen("home")}
+          onOpenRecipes={() => setAppScreen("my-recipes")}
+        />
       ) : authScreen === "login" ? (
         <LoginScreen
           onAuthenticated={() => setAppScreen("home")}

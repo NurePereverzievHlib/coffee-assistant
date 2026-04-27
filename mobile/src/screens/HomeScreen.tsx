@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  PanResponder,
   Pressable,
   RefreshControl,
   SafeAreaView,
@@ -18,17 +19,20 @@ import { getRecipes, Recipe } from "../api/recipes";
 import { getScaleStatus, ScaleStatus } from "../api/scale";
 import { BloomLogo } from "../components/BloomLogo";
 import { CoffeeFallback } from "../components/CoffeeFallback";
+import { ProfileBadge } from "../components/ProfileBadge";
+import { SwipeNavigation } from "../components/SwipeNavigation";
 
 const scaleImage = require("../../assets/scale.png");
 
 type HomeScreenProps = {
   onLogout: () => void;
+  onOpenJournal: () => void;
+  onOpenMyRecipes: () => void;
 };
 
-export function HomeScreen({ onLogout }: HomeScreenProps) {
+export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScreenProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [profile, setProfile] = useState<CurrentUser | null>(null);
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const [failedImages, setFailedImages] = useState<Record<number, true>>({});
   const [scaleStatus, setScaleStatus] = useState<ScaleStatus>({
     connected: false,
@@ -48,7 +52,20 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
     return scaleStatus.batteryLevel === null ? "невідомо" : `${scaleStatus.batteryLevel}%`;
   }, [scaleStatus.batteryLevel, scaleStatus.connected]);
 
-  const avatarUrl = useMemo(() => normalizeAvatarUrl(profile?.avatar_url), [profile?.avatar_url]);
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 30 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dx > 70) {
+            onOpenMyRecipes();
+          } else if (gesture.dx < -70) {
+            onOpenJournal();
+          }
+        }
+      }),
+    [onOpenJournal, onOpenMyRecipes]
+  );
 
   async function loadHome(mode: "initial" | "refresh" = "initial") {
     if (mode === "refresh") {
@@ -66,7 +83,6 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
       setRecipes(recipeData);
       setScaleStatus(statusData);
       setProfile(profileData);
-      setAvatarFailed(false);
       setErrorMessage(null);
     } catch (error) {
       const statusData = await getScaleStatus();
@@ -88,7 +104,7 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} {...panResponder.panHandlers}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -103,22 +119,7 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
       >
         <View style={styles.header}>
           <BloomLogo height={64} width={160} />
-          <View style={styles.profileBlock}>
-            <Pressable accessibilityRole="button" onPress={onLogout} style={styles.avatarButton}>
-              {avatarUrl && !avatarFailed ? (
-                <Image
-                  onError={() => setAvatarFailed(true)}
-                  source={{ uri: avatarUrl }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <MaterialIcons color="#1d1d1d" name="person" size={27} />
-              )}
-            </Pressable>
-            <Text numberOfLines={1} style={styles.profileName}>
-              {profile?.username ? `@${profile.username.replace(/^@/, "")}` : ""}
-            </Text>
-          </View>
+          <ProfileBadge onPress={onLogout} profile={profile} />
         </View>
 
         <LinearGradient
@@ -152,13 +153,11 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
           </View>
         </LinearGradient>
 
-        <View style={styles.navStrip}>
-          <MaterialIcons color="#bfbfbf" name="edit" size={23} />
-          <View style={styles.navDash} />
-          <MaterialIcons color="#fc7240" name="home" size={24} />
-          <View style={styles.navDash} />
-          <MaterialIcons color="#bfbfbf" name="book" size={23} />
-        </View>
+        <SwipeNavigation
+          active="home"
+          onPressJournal={onOpenJournal}
+          onPressRecipes={onOpenMyRecipes}
+        />
 
         <Text style={styles.sectionTitle}>Останні рецепти</Text>
 
@@ -198,28 +197,14 @@ export function HomeScreen({ onLogout }: HomeScreenProps) {
   );
 }
 
-function normalizeAvatarUrl(value?: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const trimmed = value.trim().replace(/^["']|["']$/g, "");
-
-  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-    return null;
-  }
-
-  try {
-    const url = new URL(trimmed);
-
-    if (url.hostname.endsWith("unsplash.com")) {
-      url.searchParams.set("fm", "jpg");
+function remoteImageSource(uri: string) {
+  return {
+    uri,
+    headers: {
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+      "User-Agent": "Mozilla/5.0"
     }
-
-    return url.toString();
-  } catch {
-    return null;
-  }
+  };
 }
 
 type StatusPillProps = {
@@ -269,7 +254,7 @@ function RecipeCard({ imageFailed, index, onImageError, recipe }: RecipeCardProp
           <Image
             onError={onImageError}
             resizeMode="cover"
-            source={{ uri: recipe.coffee_image as string }}
+            source={remoteImageSource(recipe.coffee_image as string)}
             style={styles.recipeImage}
           />
         ) : (
@@ -357,37 +342,10 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     flexDirection: "row",
-    height: 88,
+    height: 108,
     justifyContent: "space-between",
-    paddingHorizontal: 8
-  },
-  profileBlock: {
-    alignItems: "center",
-    marginRight: 8,
-    width: 74
-  },
-  avatarButton: {
-    alignItems: "center",
-    backgroundColor: "#f1f1f1",
-    borderRadius: 24,
-    height: 48,
-    justifyContent: "center",
-    overflow: "hidden",
-    width: 48
-  },
-  avatarImage: {
-    height: 48,
-    resizeMode: "cover",
-    width: 48
-  },
-  profileName: {
-    color: "#1d1d1d",
-    fontFamily: "Manrope_700Bold",
-    fontSize: 11,
-    lineHeight: 14,
-    marginTop: 3,
-    maxWidth: 74,
-    textAlign: "center"
+    paddingHorizontal: 8,
+    paddingTop: 18
   },
   devicePanel: {
     borderBottomLeftRadius: 15,
@@ -452,19 +410,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 12,
     marginTop: 2
-  },
-  navStrip: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 15,
-    height: 60,
-    justifyContent: "center"
-  },
-  navDash: {
-    backgroundColor: "#7c7c7c",
-    borderRadius: 2,
-    height: 4,
-    width: 17
   },
   sectionTitle: {
     color: "#000000",
