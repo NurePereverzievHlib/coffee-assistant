@@ -16,3 +16,4 @@ class User(Base):
     created_recipes = relationship("Recipe", back_populates="creator")
     user_recipes = relationship("UserRecipe", back_populates="user", cascade="all, delete-orphan")
     brewing_sessions = relationship("BrewingSession", back_populates="user", cascade="all, delete-orphan")
+    scales = relationship("Scale", back_populates="user", cascade="all, delete-orphan")

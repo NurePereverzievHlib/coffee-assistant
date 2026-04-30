@@ -4,11 +4,12 @@ from app.db.database import Base
 from datetime import datetime
 
 class BrewingSession(Base):
-    __tablename__ = "brewing_session"
+    __tablename__ = "brewing_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     recipe_id = Column(Integer, ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False)
+    scale_id = Column(Integer, ForeignKey("scales.id", ondelete="SET NULL"), nullable=True)
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime, nullable=True)
     current_step = Column(Integer, default=0)
@@ -16,6 +17,7 @@ class BrewingSession(Base):
 
     user = relationship("User", back_populates="brewing_sessions")
     recipe = relationship("Recipe", back_populates="brewing_sessions")
+    scale = relationship("Scale", back_populates="brewing_sessions")
     sensor_logs = relationship(
         "SensorData",
         back_populates="session",

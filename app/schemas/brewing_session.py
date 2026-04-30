@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 class BrewingSessionCreate(BaseModel):
     recipe_id: int = Field(..., description="Recipe ID")
+    scale_id: Optional[int] = Field(None, description="Scale ID")
 
 
 class BrewingSessionUpdate(BaseModel):
@@ -19,6 +20,7 @@ class BrewingSessionResponse(BaseModel):
     id: int
     user_id: int
     recipe_id: int
+    scale_id: Optional[int] = None
     start_time: datetime
     end_time: Optional[datetime] = None
     current_step: int

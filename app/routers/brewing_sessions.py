@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user, get_db
 from app.models.brewing_session import BrewingSession
+from app.models.scale import Scale
 from app.models.step import Step
 from app.models.user import User
 from app.schemas.brewing_session import (
@@ -80,9 +81,19 @@ def create_session(
     if not user_can_access_recipe(db, current_user.id, session.recipe_id):
         raise HTTPException(status_code=403, detail="Recipe is not available for this user")
 
+    if session.scale_id is not None:
+        scale = db.query(Scale).filter(
+            Scale.id == session.scale_id,
+            Scale.user_id == current_user.id,
+            Scale.is_active == True,
+        ).first()
+        if not scale:
+            raise HTTPException(status_code=404, detail="Scale not found")
+
     db_session = BrewingSession(
         user_id=current_user.id,
         recipe_id=session.recipe_id,
+        scale_id=session.scale_id,
         start_time=datetime.utcnow(),
         current_step=0,
         status="in_progress",

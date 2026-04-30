@@ -6,7 +6,7 @@ class SensorData(Base):
     __tablename__ = "sensor_data"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("brewing_session.id"))
+    session_id = Column(Integer, ForeignKey("brewing_sessions.id"))
     timestamp = Column(String)  # ISO timestamp
     weight = Column(Float, nullable=False)
     pour_rate = Column(Float)  # мл/с

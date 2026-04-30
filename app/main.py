@@ -1,16 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
-from app.db.schema_updates import ensure_recipe_details_columns, ensure_user_avatar_column
+from app.db.schema_updates import (
+    ensure_brewing_session_scale_column,
+    ensure_recipe_details_columns,
+    ensure_user_avatar_column,
+)
 
-from app.routers import coffee_beans, recipes, steps, brewing_sessions, sensor_data_route
+from app.routers import coffee_beans, recipes, scales, steps, brewing_sessions, sensor_data_route
 from app.auth.auth import router as auth_router  
 
-from app.models import coffee_bean, recipe, step, user, user_recipe, brewing_session, sensor_data
+from app.models import coffee_bean, recipe, scale, step, user, user_recipe, brewing_session, sensor_data
 
 Base.metadata.create_all(bind=engine)
 ensure_user_avatar_column(engine)
 ensure_recipe_details_columns(engine)
+ensure_brewing_session_scale_column(engine)
 
 app = FastAPI(title="Coffee Brew Assistant API")
 
@@ -36,6 +41,7 @@ def root():
 app.include_router(auth_router)            
 app.include_router(coffee_beans.router)
 app.include_router(recipes.router)
+app.include_router(scales.router)
 app.include_router(steps.router)
 app.include_router(brewing_sessions.router)
 app.include_router(sensor_data_route.router)

@@ -24,3 +24,22 @@ def ensure_recipe_details_columns(engine: Engine) -> None:
 
         if "step_type" not in step_columns:
             connection.execute(text("ALTER TABLE recipe_steps ADD COLUMN step_type VARCHAR NOT NULL DEFAULT 'Лити'"))
+
+def ensure_brewing_session_scale_column(engine: Engine) -> None:
+    inspector = inspect(engine)
+    session_columns = {column["name"] for column in inspector.get_columns("brewing_sessions")}
+
+    if "scale_id" in session_columns:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE brewing_sessions ADD COLUMN scale_id INTEGER"))
+        connection.execute(
+            text(
+                """
+                ALTER TABLE brewing_sessions
+                ADD CONSTRAINT brewing_sessions_scale_id_fkey
+                FOREIGN KEY (scale_id) REFERENCES scales(id) ON DELETE SET NULL
+                """
+            )
+        )
