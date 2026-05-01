@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.db.schema_updates import (
+    ensure_brewing_session_review_columns,
     ensure_brewing_session_scale_column,
     ensure_recipe_details_columns,
     ensure_user_avatar_column,
@@ -16,6 +17,7 @@ Base.metadata.create_all(bind=engine)
 ensure_user_avatar_column(engine)
 ensure_recipe_details_columns(engine)
 ensure_brewing_session_scale_column(engine)
+ensure_brewing_session_review_columns(engine)
 
 app = FastAPI(title="Coffee Brew Assistant API")
 

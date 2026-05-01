@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from datetime import datetime
@@ -14,6 +14,10 @@ class BrewingSession(Base):
     end_time = Column(DateTime, nullable=True)
     current_step = Column(Integer, default=0)
     status = Column(String, default="in_progress")  # in_progress, completed
+    brew_description = Column(String, nullable=True)
+    rating = Column(Integer, nullable=True)
+    review_text = Column(String, nullable=True)
+    is_favorite = Column(Boolean, nullable=False, default=False)
 
     user = relationship("User", back_populates="brewing_sessions")
     recipe = relationship("Recipe", back_populates="brewing_sessions")

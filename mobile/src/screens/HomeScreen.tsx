@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   PanResponder,
   Pressable,
   RefreshControl,
@@ -11,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -47,6 +49,10 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBrewMethod, setSelectedBrewMethod] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const scalePanelColors = scaleStatus.connected
     ? (["#f5af19", "#ffc29c", "#f12711"] as const)
@@ -69,6 +75,30 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
       second: "2-digit"
     })}`;
   }, [scaleStatus.updatedAt]);
+  const brewMethodOptions = useMemo(
+    () => Array.from(new Set(recipes.map((recipe) => recipe.brew_method).filter(Boolean))).sort(),
+    [recipes]
+  );
+
+  const filteredRecipes = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return recipes.filter((recipe) => {
+      const matchesMethod = selectedBrewMethod ? recipe.brew_method === selectedBrewMethod : true;
+      const matchesQuery = query
+        ? [
+            recipe.name,
+            recipe.description ?? "",
+            recipe.brew_method,
+            recipe.coffee_name ?? "",
+            `${recipe.coffee_grams}`,
+            `${recipe.water_temp}`
+          ].some((value) => value.toLowerCase().includes(query))
+        : true;
+
+      return matchesMethod && matchesQuery;
+    });
+  }, [recipes, searchQuery, selectedBrewMethod]);
 
   const panResponder = useMemo(
     () =>
@@ -119,6 +149,20 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
     }, 3000);
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
   }, []);
 
   return (
@@ -198,14 +242,16 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
               <Text style={styles.retryText}>Спробувати ще раз</Text>
             </Pressable>
           </View>
-        ) : recipes.length === 0 ? (
+        ) : filteredRecipes.length === 0 ? (
           <View style={styles.stateBox}>
             <CoffeeFallback size={82} variant="line" />
-            <Text style={styles.stateText}>У базі поки немає рецептів.</Text>
+            <Text style={styles.stateText}>
+              {searchQuery.trim() || selectedBrewMethod ? "За цим фільтром рецептів не знайдено." : "У базі поки немає рецептів."}
+            </Text>
           </View>
         ) : (
           <View style={styles.recipeGrid}>
-            {recipes.map((recipe, index) => (
+            {filteredRecipes.map((recipe, index) => (
               <RecipeCard
                 imageFailed={Boolean(failedImages[recipe.id])}
                 index={index}
@@ -217,6 +263,68 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
           </View>
         )}
       </ScrollView>
+      {isFilterOpen ? (
+        <View style={[styles.filterPanel, keyboardHeight > 0 && { bottom: keyboardHeight + 92 }]}>
+          <View style={styles.filterHeader}>
+            <Text style={styles.filterTitle}>Метод заварювання</Text>
+            <Pressable accessibilityRole="button" onPress={() => setIsFilterOpen(false)} style={styles.filterCloseButton}>
+              <MaterialIcons color="#111111" name="close" size={20} />
+            </Pressable>
+          </View>
+
+          <View style={styles.filterChipWrap}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setSelectedBrewMethod(null);
+                setIsFilterOpen(false);
+              }}
+              style={[styles.filterChip, !selectedBrewMethod && styles.filterChipActive]}
+            >
+              <Text style={[styles.filterChipText, !selectedBrewMethod && styles.filterChipTextActive]}>Усі</Text>
+            </Pressable>
+
+            {brewMethodOptions.map((method) => (
+              <Pressable
+                accessibilityRole="button"
+                key={method}
+                onPress={() => {
+                  setSelectedBrewMethod(method);
+                  setIsFilterOpen(false);
+                }}
+                style={[styles.filterChip, selectedBrewMethod === method && styles.filterChipActive]}
+              >
+                <Text style={[styles.filterChipText, selectedBrewMethod === method && styles.filterChipTextActive]}>
+                  {method}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.filterHint}>Обробку й регіон додамо після появи цих полів у рецептах.</Text>
+        </View>
+      ) : null}
+
+      <View style={[styles.searchDock, keyboardHeight > 0 && { bottom: keyboardHeight + 10 }]}>
+        <View style={styles.searchBar}>
+          <TextInput
+            onChangeText={setSearchQuery}
+            placeholder="Пошук рецептів"
+            placeholderTextColor="#4e4e4e"
+            style={styles.searchInput}
+            value={searchQuery}
+          />
+          <MaterialIcons color="#111111" name="search" size={42} />
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setIsFilterOpen((current) => !current)}
+          style={[styles.filterButton, selectedBrewMethod && styles.filterButtonActive]}
+        >
+          <MaterialIcons color={selectedBrewMethod ? "#ffffff" : "#111111"} name="filter-list" size={32} />
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -361,7 +469,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
-    paddingBottom: 28
+    paddingBottom: 108
   },
   header: {
     alignItems: "center",
@@ -606,5 +714,105 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
     fontSize: 16,
     lineHeight: 20
+  },
+  searchDock: {
+    alignItems: "center",
+    alignSelf: "center",
+    bottom: 14,
+    flexDirection: "row",
+    gap: 10,
+    position: "absolute",
+    width: "92%"
+  },
+  searchBar: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderColor: "#000000",
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: "row",
+    height: 70,
+    justifyContent: "space-between",
+    paddingHorizontal: 17
+  },
+  searchInput: {
+    color: "#4e4e4e",
+    flex: 1,
+    fontFamily: "Manrope_500Medium",
+    fontSize: 28,
+    height: "100%",
+    paddingRight: 10
+  },
+  filterButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderColor: "#000000",
+    borderRadius: 35,
+    borderWidth: 1,
+    height: 70,
+    justifyContent: "center",
+    width: 70
+  },
+  filterButtonActive: {
+    backgroundColor: "#111111"
+  },
+  filterPanel: {
+    alignSelf: "center",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderColor: "#000000",
+    borderRadius: 8,
+    borderWidth: 1,
+    bottom: 96,
+    padding: 14,
+    position: "absolute",
+    width: "92%",
+    zIndex: 10
+  },
+  filterHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12
+  },
+  filterTitle: {
+    color: "#111111",
+    fontFamily: "Manrope_700Bold",
+    fontSize: 16
+  },
+  filterCloseButton: {
+    alignItems: "center",
+    height: 32,
+    justifyContent: "center",
+    width: 32
+  },
+  filterChipWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8
+  },
+  filterChip: {
+    borderColor: "#111111",
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8
+  },
+  filterChipActive: {
+    backgroundColor: "#111111"
+  },
+  filterChipText: {
+    color: "#111111",
+    fontFamily: "Manrope_700Bold",
+    fontSize: 13
+  },
+  filterChipTextActive: {
+    color: "#ffffff"
+  },
+  filterHint: {
+    color: "#626262",
+    fontFamily: "Manrope_500Medium",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 12
   }
 });

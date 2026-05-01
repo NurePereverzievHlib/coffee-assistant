@@ -43,3 +43,21 @@ def ensure_brewing_session_scale_column(engine: Engine) -> None:
                 """
             )
         )
+
+
+def ensure_brewing_session_review_columns(engine: Engine) -> None:
+    inspector = inspect(engine)
+    session_columns = {column["name"] for column in inspector.get_columns("brewing_sessions")}
+
+    with engine.begin() as connection:
+        if "brew_description" not in session_columns:
+            connection.execute(text("ALTER TABLE brewing_sessions ADD COLUMN brew_description VARCHAR"))
+
+        if "rating" not in session_columns:
+            connection.execute(text("ALTER TABLE brewing_sessions ADD COLUMN rating INTEGER"))
+
+        if "review_text" not in session_columns:
+            connection.execute(text("ALTER TABLE brewing_sessions ADD COLUMN review_text VARCHAR"))
+
+        if "is_favorite" not in session_columns:
+            connection.execute(text("ALTER TABLE brewing_sessions ADD COLUMN is_favorite BOOLEAN NOT NULL DEFAULT FALSE"))
