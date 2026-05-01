@@ -1,11 +1,17 @@
+import { API_URL } from "./auth";
+import { getAccessToken } from "../storage/authToken";
+
 export type ScaleStatus = {
   connected: boolean;
   batteryLevel: number | null;
   signalStrength: "strong" | "weak" | "offline";
   updatedAt: string | null;
+  scaleId: number | null;
+  scaleName: string | null;
+  latestWeight: number | null;
+  latestPourRate: number | null;
 };
 
-const SCALE_API_URL = process.env.EXPO_PUBLIC_SCALE_API_URL;
 const SCALE_STATUS_TIMEOUT_MS = 2500;
 
 function timeoutSignal(timeoutMs: number) {
@@ -19,20 +25,29 @@ function timeoutSignal(timeoutMs: number) {
 }
 
 export async function getScaleStatus(): Promise<ScaleStatus> {
-  if (!SCALE_API_URL) {
+  const token = await getAccessToken();
+
+  if (!token) {
     return {
       connected: false,
       batteryLevel: null,
       signalStrength: "offline",
-      updatedAt: null
+      updatedAt: null,
+      scaleId: null,
+      scaleName: null,
+      latestWeight: null,
+      latestPourRate: null
     };
   }
 
   const timeout = timeoutSignal(SCALE_STATUS_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${SCALE_API_URL}/status`, {
+    const response = await fetch(`${API_URL}/scales/status`, {
       method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
       signal: timeout.signal
     });
 
@@ -40,31 +55,36 @@ export async function getScaleStatus(): Promise<ScaleStatus> {
       throw new Error("Scale status request failed");
     }
 
-    const responseText = await response.text();
-    let data: {
-      batteryLevel?: number;
-      battery?: number;
-      signalStrength?: "strong" | "weak";
-    } = {};
-
-    try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch {
-      data = {};
-    }
+    const data = (await response.json()) as {
+      connected?: boolean;
+      signal_strength?: "strong" | "weak" | "offline";
+      scale_id?: number | null;
+      scale_name?: string | null;
+      latest_weight?: number | null;
+      latest_pour_rate?: number | null;
+      updated_at?: string | null;
+    };
 
     return {
-      connected: true,
-      batteryLevel: data.batteryLevel ?? data.battery ?? null,
-      signalStrength: data.signalStrength ?? "strong",
-      updatedAt: new Date().toISOString()
+      connected: Boolean(data.connected),
+      batteryLevel: null,
+      signalStrength: data.signal_strength ?? (data.connected ? "strong" : "offline"),
+      updatedAt: data.updated_at ?? null,
+      scaleId: data.scale_id ?? null,
+      scaleName: data.scale_name ?? null,
+      latestWeight: data.latest_weight ?? null,
+      latestPourRate: data.latest_pour_rate ?? null
     };
   } catch {
     return {
       connected: false,
       batteryLevel: null,
       signalStrength: "offline",
-      updatedAt: null
+      updatedAt: null,
+      scaleId: null,
+      scaleName: null,
+      latestWeight: null,
+      latestPourRate: null
     };
   } finally {
     timeout.clear();

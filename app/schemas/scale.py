@@ -24,3 +24,13 @@ class ScaleResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ScaleStatusResponse(BaseModel):
+    connected: bool
+    signal_strength: str
+    scale_id: Optional[int] = None
+    scale_name: Optional[str] = None
+    latest_weight: Optional[float] = None
+    latest_pour_rate: Optional[float] = None
+    updated_at: Optional[str] = None

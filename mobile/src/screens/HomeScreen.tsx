@@ -38,19 +38,37 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
     connected: false,
     batteryLevel: null,
     signalStrength: "offline",
-    updatedAt: null
+    updatedAt: null,
+    scaleId: null,
+    scaleName: null,
+    latestWeight: null,
+    latestPourRate: null
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const batteryText = useMemo(() => {
-    if (!scaleStatus.connected) {
-      return "немає даних";
+  const scalePanelColors = scaleStatus.connected
+    ? (["#f5af19", "#ffc29c", "#f12711"] as const)
+    : (["#d8d8d8", "#eeeeee", "#b7b7b7"] as const);
+  const latestWeightText = scaleStatus.latestWeight === null ? "немає даних" : `${scaleStatus.latestWeight.toFixed(1)} г`;
+  const latestPourRateText = scaleStatus.latestPourRate === null ? "очікуємо дані" : `${scaleStatus.latestPourRate.toFixed(1)} г/с`;
+  const updatedAtText = useMemo(() => {
+    if (!scaleStatus.updatedAt) {
+      return "дані ще не надходили";
     }
 
-    return scaleStatus.batteryLevel === null ? "невідомо" : `${scaleStatus.batteryLevel}%`;
-  }, [scaleStatus.batteryLevel, scaleStatus.connected]);
+    const updatedAt = new Date(scaleStatus.updatedAt);
+    if (Number.isNaN(updatedAt.getTime())) {
+      return "час оновлення невідомий";
+    }
+
+    return `оновлено ${updatedAt.toLocaleTimeString("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })}`;
+  }, [scaleStatus.updatedAt]);
 
   const panResponder = useMemo(
     () =>
@@ -98,7 +116,7 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
     loadHome();
     const intervalId = setInterval(() => {
       getScaleStatus().then(setScaleStatus);
-    }, 15000);
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -123,32 +141,38 @@ export function HomeScreen({ onLogout, onOpenJournal, onOpenMyRecipes }: HomeScr
         </View>
 
         <LinearGradient
-          colors={["#f5af19", "#ffc29c", "#f12711"]}
+          colors={scalePanelColors}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={styles.devicePanel}
         >
-          <Text style={styles.deviceTitle}>Ваш пристрій</Text>
-          <Image resizeMode="contain" source={scaleImage} style={styles.scaleImage} />
+          <Text style={styles.deviceTitle}>
+            {scaleStatus.connected ? "Ваги підключені" : "Ваги не підключені"}
+          </Text>
+          <Image
+            resizeMode="contain"
+            source={scaleImage}
+            style={[styles.scaleImage, !scaleStatus.connected && styles.scaleImageOffline]}
+          />
 
           <View style={styles.deviceStatusStack}>
             <StatusPill
               icon="bluetooth"
-              iconColor="#4d6fff"
-              title={scaleStatus.connected ? "Wi‑Fi підключено" : "Ваги не відповідають"}
-              subtitle={scaleStatus.connected ? "Стабільний сигнал" : "Очікуємо відповідь від ваг"}
+              iconColor={scaleStatus.connected ? "#4d6fff" : "#7a7a7a"}
+              title={scaleStatus.connected ? "Пристрій передає дані" : "Пристрій офлайн"}
+              subtitle={scaleStatus.connected ? scaleStatus.scaleName ?? "Ваги синхронізуються" : "Немає свіжих записів у БД"}
             />
             <StatusPill
               icon="wifi"
-              iconColor="#62d27a"
-              title="Wi‑Fi синхронізація"
-              subtitle={scaleStatus.connected ? "Автоматичне збереження даних" : "Недоступна без з'єднання"}
+              iconColor={scaleStatus.connected ? "#2f9e44" : "#7a7a7a"}
+              title={`Поточна вага: ${latestWeightText}`}
+              subtitle={scaleStatus.connected ? "дані записуються у сеанс" : "очікуємо підключення ваг"}
             />
             <StatusPill
-              icon="battery-5-bar"
-              iconColor="#dca240"
-              title={`Рівень заряду: ${batteryText}`}
-              subtitle={scaleStatus.connected ? "Залишилось приблизно: 72 год" : "Перевірте живлення пристрою"}
+              icon="speed"
+              iconColor={scaleStatus.connected ? "#d97706" : "#7a7a7a"}
+              title={`Потік: ${latestPourRateText}`}
+              subtitle={updatedAtText}
             />
           </View>
         </LinearGradient>
@@ -370,6 +394,9 @@ const styles = StyleSheet.create({
     top: 41,
     transform: [{ rotate: "15deg" }],
     width: 216
+  },
+  scaleImageOffline: {
+    opacity: 0.45
   },
   deviceStatusStack: {
     gap: 6,

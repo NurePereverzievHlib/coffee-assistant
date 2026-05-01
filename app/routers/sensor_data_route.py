@@ -139,7 +139,6 @@ async def sensor_device_ws(websocket: WebSocket, device_token: str):
                 scale.last_seen_at = datetime.utcnow()
 
                 session = db.query(BrewingSession).filter(
-                    BrewingSession.user_id == scale.user_id,
                     BrewingSession.scale_id == scale.id,
                     BrewingSession.status == "in_progress",
                 ).order_by(BrewingSession.start_time.desc()).first()
